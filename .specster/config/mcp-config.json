@@ -1,0 +1,87 @@
+{
+  "mcpServers": {
+    "specster-server": {
+      "command": "node",
+      "args": ["mcp-server/dist/server.js"],
+      "env": {
+        "SPECSTER_DATA_DIR": ".specster",
+        "SPECSTER_TEMPLATES_DIR": ".specster/templates",
+        "SPECSTER_CONFIG_DIR": ".specster/config",
+        "NODE_ENV": "production"
+      },
+      "cwd": ".",
+      "timeout": 30000
+    }
+  },
+  "tools": {
+    "initializeSpec": {
+      "description": "Initialize a new specification",
+      "parameters": {
+        "name": "string",
+        "description": "string"
+      }
+    },
+    "enterRequirementsPhase": {
+      "description": "Enter requirements gathering phase",
+      "parameters": {
+        "specName": "string"
+      }
+    },
+    "generateDesign": {
+      "description": "Generate design documentation",
+      "parameters": {
+        "specName": "string"
+      }
+    },
+    "createImplementationTasks": {
+      "description": "Create implementation tasks",
+      "parameters": {
+        "specName": "string"
+      }
+    },
+    "getSpecStatus": {
+      "description": "Get specification status",
+      "parameters": {
+        "specName": "string"
+      }
+    },
+    "updatePhaseProgress": {
+      "description": "Update phase progress",
+      "parameters": {
+        "specName": "string",
+        "phase": "string",
+        "completed": "boolean"
+      }
+    },
+    "validatePhaseTransition": {
+      "description": "Validate phase transition",
+      "parameters": {
+        "specName": "string",
+        "fromPhase": "string",
+        "toPhase": "string"
+      }
+    },
+    "saveSpecificationFile": {
+      "description": "Save specification file",
+      "parameters": {
+        "specName": "string",
+        "fileName": "string",
+        "content": "string"
+      }
+    },
+    "loadSpecificationFile": {
+      "description": "Load specification file",
+      "parameters": {
+        "specName": "string",
+        "fileName": "string"
+      }
+    },
+    "applyTemplate": {
+      "description": "Apply template with variables",
+      "parameters": {
+        "templateName": "string",
+        "variables": "object"
+      }
+    }
+  }
+}

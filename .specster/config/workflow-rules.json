@@ -1,0 +1,75 @@
+{
+  "phaseTransitions": {
+    "init": ["requirements"],
+    "requirements": ["design"],
+    "design": ["tasks"],
+    "tasks": ["complete"]
+  },
+  "approvalRequired": ["requirements", "design", "tasks"],
+  "validationRules": {
+    "requirements": [
+      {
+        "name": "ears_format",
+        "description": "Requirements must use EARS format (WHEN/IF/THEN/SHALL)",
+        "required": true
+      },
+      {
+        "name": "user_stories",
+        "description": "Must contain at least one user story",
+        "required": true
+      },
+      {
+        "name": "acceptance_criteria",
+        "description": "Each user story must have acceptance criteria",
+        "required": true
+      }
+    ],
+    "design": [
+      {
+        "name": "architecture_diagram",
+        "description": "Must contain system architecture diagram",
+        "required": true
+      },
+      {
+        "name": "component_interfaces",
+        "description": "Must define component interfaces",
+        "required": true
+      },
+      {
+        "name": "data_models",
+        "description": "Must define data models",
+        "required": true
+      }
+    ],
+    "tasks": [
+      {
+        "name": "task_breakdown",
+        "description": "Must break down into specific tasks",
+        "required": true
+      },
+      {
+        "name": "requirement_references",
+        "description": "Tasks must reference specific requirements",
+        "required": true
+      },
+      {
+        "name": "dependency_order",
+        "description": "Tasks must be ordered by dependencies",
+        "required": true
+      }
+    ]
+  },
+  "fileStructure": {
+    "specDirectory": ".specster/specs/{specName}",
+    "stateDirectory": ".specster/state",
+    "templatesDirectory": ".specster/templates",
+    "configDirectory": ".specster/config",
+    "hooksDirectory": ".specster/hooks"
+  },
+  "limits": {
+    "maxSpecNameLength": 50,
+    "maxDescriptionLength": 200,
+    "maxFileSize": 1048576,
+    "maxConcurrentSpecs": 10
+  }
+}

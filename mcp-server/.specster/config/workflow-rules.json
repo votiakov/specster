@@ -1,0 +1,143 @@
+{
+  "phaseTransitions": {
+    "init": ["requirements"],
+    "requirements": ["design"],
+    "design": ["tasks"],
+    "tasks": ["complete"],
+    "complete": []
+  },
+  "approvalRequired": ["design", "tasks", "complete"],
+  "autoTransition": false,
+  "validators": {
+    "init": [],
+    "requirements": ["requirements-validator"],
+    "design": ["design-validator"],
+    "tasks": ["tasks-validator"],
+    "complete": ["completion-validator"]
+  },
+  "phaseConfiguration": {
+    "init": {
+      "name": "Initialization",
+      "description": "Initialize new specification",
+      "estimatedDuration": 15,
+      "required": true,
+      "artifacts": []
+    },
+    "requirements": {
+      "name": "Requirements Analysis",
+      "description": "Gather and analyze project requirements using EARS notation",
+      "estimatedDuration": 120,
+      "required": true,
+      "artifacts": ["requirements.md"],
+      "validationCriteria": [
+        "Requirements file must exist",
+        "Must contain user stories",
+        "Must use EARS format for acceptance criteria",
+        "Must have approval from stakeholder"
+      ]
+    },
+    "design": {
+      "name": "System Design",
+      "description": "Create system architecture and design documentation",
+      "estimatedDuration": 180,
+      "required": true,
+      "artifacts": ["design.md"],
+      "validationCriteria": [
+        "Design file must exist",
+        "Must contain architecture diagrams",
+        "Must define component interfaces",
+        "Must include data models",
+        "Must have design review approval"
+      ]
+    },
+    "tasks": {
+      "name": "Implementation Tasks",
+      "description": "Create detailed implementation task breakdown",
+      "estimatedDuration": 60,
+      "required": true,
+      "artifacts": ["tasks.md"],
+      "validationCriteria": [
+        "Tasks file must exist",
+        "Must contain numbered task list",
+        "Tasks must reference requirements",
+        "Must have task review approval"
+      ]
+    },
+    "complete": {
+      "name": "Completion",
+      "description": "Specification is complete and ready for implementation",
+      "estimatedDuration": 0,
+      "required": true,
+      "artifacts": ["requirements.md", "design.md", "tasks.md"],
+      "validationCriteria": [
+        "All previous phases must be complete",
+        "All artifacts must be approved",
+        "Final approval from project lead required"
+      ]
+    }
+  },
+  "approvalSettings": {
+    "approvalTimeout": 86400000,
+    "requiresComments": true,
+    "allowSelfApproval": false,
+    "approvalRoles": ["lead", "architect", "stakeholder"],
+    "escalationTimeouts": {
+      "design": 172800000,
+      "tasks": 86400000,
+      "complete": 259200000
+    }
+  },
+  "validationSettings": {
+    "strictMode": true,
+    "customValidators": {
+      "requirements-validator": {
+        "enabled": true,
+        "checks": [
+          "file-exists",
+          "content-not-empty",
+          "has-user-stories",
+          "has-acceptance-criteria",
+          "ears-format-validation"
+        ]
+      },
+      "design-validator": {
+        "enabled": true,
+        "checks": [
+          "file-exists",
+          "content-not-empty",
+          "has-architecture-section",
+          "has-component-interfaces",
+          "has-data-models"
+        ]
+      },
+      "tasks-validator": {
+        "enabled": true,
+        "checks": [
+          "file-exists",
+          "content-not-empty",
+          "has-numbered-tasks",
+          "tasks-reference-requirements"
+        ]
+      },
+      "completion-validator": {
+        "enabled": true,
+        "checks": [
+          "all-phases-complete",
+          "all-artifacts-approved",
+          "final-approval-obtained"
+        ]
+      }
+    }
+  },
+  "notificationSettings": {
+    "enabled": true,
+    "channels": ["console", "file"],
+    "events": [
+      "phase-transition",
+      "approval-requested",
+      "approval-granted",
+      "validation-failed",
+      "workflow-complete"
+    ]
+  }
+}
