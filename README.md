@@ -14,19 +14,23 @@ Transform rough ideas into well-defined, implementable features using a structur
 
 ## 🚀 Quick Installation
 
-### One-Command Installation
+### One-Command Remote Installation
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yourorg/specster/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/votiakov/specster/main/install.sh | bash
 ```
 
-**OR** if you have the source code:
+**Local Installation** (if you've cloned the repository):
 
 ```bash
+git clone https://github.com/votiakov/specster.git
+cd specster
 ./install.sh
 ```
 
 That's it! The installer will:
+- ✅ **Auto-detect** installation context (remote vs local)
+- ✅ **Download repository** automatically (remote mode)
 - ✅ Check prerequisites (Node.js, npm, Claude Code)
 - ✅ Build the MCP server
 - ✅ Configure Claude Code integration
@@ -39,6 +43,8 @@ Before installation, ensure you have:
 
 - **Node.js** v16+ and **npm** ([Download here](https://nodejs.org/))
 - **Claude Code CLI** ([Install guide](https://docs.anthropic.com/en/docs/claude-code/quickstart))
+- **curl** or **wget** (for remote installation - usually pre-installed)
+- **unzip** (for remote installation - usually pre-installed)
 
 ### Installing Prerequisites
 
@@ -209,9 +215,9 @@ your-project/
 
 If the automatic installer doesn't work, you can install manually:
 
-### Step 1: Clone/Download Specster
+### Step 1: Clone Specster Repository
 ```bash
-git clone https://github.com/yourorg/specster.git
+git clone https://github.com/votiakov/specster.git
 cd specster
 ```
 
@@ -413,7 +419,7 @@ claude
 1. **Check the troubleshooting section above**
 2. **Run installer with `--verbose` flag**
 3. **Check Claude Code documentation**: [docs.anthropic.com/claude-code](https://docs.anthropic.com/en/docs/claude-code)
-4. **Create an issue**: [GitHub Issues](https://github.com/yourorg/specster/issues)
+4. **Create an issue**: [GitHub Issues](https://github.com/votiakov/specster/issues)
 
 ## 🤝 Contributing
 
@@ -428,7 +434,7 @@ We welcome contributions! Here's how to get started:
 
 ### Development Setup
 ```bash
-git clone https://github.com/yourorg/specster.git
+git clone https://github.com/votiakov/specster.git
 cd specster
 ./install.sh --verbose
 ```
@@ -457,10 +463,40 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
+## 🌐 Installation Options
+
+### Remote Installation (Recommended)
+Perfect for first-time users or CI/CD:
+```bash
+curl -fsSL https://raw.githubusercontent.com/votiakov/specster/main/install.sh | bash
+```
+
+### Remote Installation with Options
+```bash
+# Verbose mode for troubleshooting
+curl -fsSL https://raw.githubusercontent.com/votiakov/specster/main/install.sh | bash -s -- --verbose
+
+# Silent mode for automation
+curl -fsSL https://raw.githubusercontent.com/votiakov/specster/main/install.sh | bash -s -- --silent
+
+# Preview what will be installed
+curl -fsSL https://raw.githubusercontent.com/votiakov/specster/main/install.sh | bash -s -- --dry-run
+```
+
+### Local Installation
+For development or when you want to examine the code first:
+```bash
+git clone https://github.com/votiakov/specster.git
+cd specster
+./install.sh
+```
+
+---
+
 **Ready to transform your development workflow?** 
 
 ```bash
-./install.sh && claude
+curl -fsSL https://raw.githubusercontent.com/votiakov/specster/main/install.sh | bash && claude
 ```
 
 *Happy spec-driven development! 🚀*
