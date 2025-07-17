@@ -14,6 +14,7 @@ SILENT=false
 DRY_RUN=false
 REMOTE_INSTALL=false
 TEMP_DIR=""
+INSTALL_DIR=""  # User's target installation directory
 
 # Colors for output
 RED='\033[0;31m'
@@ -196,6 +197,73 @@ download_repository() {
     fi
     
     success "Repository downloaded and extracted ✓"
+}
+
+# Copy files from temp to installation directory
+copy_files_to_install_dir() {
+    if [ "$REMOTE_INSTALL" = false ]; then
+        debug "Skipping file copy - using local files"
+        return 0
+    fi
+    
+    log "Installing files to: ${INSTALL_DIR}"
+    
+    if [ "$DRY_RUN" = true ]; then
+        echo "Would copy files from temp directory to: ${INSTALL_DIR}"
+        echo "Would copy: .specster/, .claude/, mcp-server/, documentation files"
+        return 0
+    fi
+    
+    # Ensure we're in the extracted directory
+    if [ ! -d ".specster" ] || [ ! -d "mcp-server" ]; then
+        error "Not in the correct directory for file copying"
+        return 1
+    fi
+    
+    # Copy essential directories
+    debug "Copying .specster directory..."
+    cp -r .specster "${INSTALL_DIR}/" || {
+        error "Failed to copy .specster directory"
+        return 1
+    }
+    
+    debug "Copying .claude directory..."
+    cp -r .claude "${INSTALL_DIR}/" || {
+        error "Failed to copy .claude directory"
+        return 1
+    }
+    
+    debug "Copying mcp-server directory..."
+    cp -r mcp-server "${INSTALL_DIR}/" || {
+        error "Failed to copy mcp-server directory"
+        return 1
+    }
+    
+    # Copy documentation files
+    for file in README.md DEMO.md workflow.md LICENSE package.json; do
+        if [ -f "$file" ]; then
+            debug "Copying $file..."
+            cp "$file" "${INSTALL_DIR}/" || {
+                warn "Failed to copy $file (non-critical)"
+            }
+        fi
+    done
+    
+    # Copy other useful files
+    for file in .specster-architecture.md test-workflow.js; do
+        if [ -f "$file" ]; then
+            debug "Copying $file..."
+            cp "$file" "${INSTALL_DIR}/" || {
+                warn "Failed to copy $file (non-critical)"
+            }
+        fi
+    done
+    
+    success "Files installed to ${INSTALL_DIR} ✓"
+    
+    # Change to the installation directory for subsequent operations
+    cd "${INSTALL_DIR}"
+    debug "Changed working directory to: ${INSTALL_DIR}"
 }
 
 # Cleanup temporary files
@@ -492,24 +560,39 @@ configure_claude_code() {
     debug "Default author: $author_name"
     
     # Add MCP server to Claude Code
-    claude mcp add specster-server node "$server_path" \
+    debug "Running: claude mcp add specster-server node $server_path"
+    
+    if claude mcp add specster-server node "$server_path" \
         -e SPECSTER_DATA_DIR=".specster" \
         -e SPECSTER_TEMPLATES_DIR=".specster/templates" \
         -e SPECSTER_CONFIG_DIR=".specster/config" \
         -e SPECSTER_DEFAULT_AUTHOR="$author_name" \
         -e SPECSTER_ENABLE_VALIDATION="true" \
-        -e NODE_ENV="production" 2>/dev/null || {
+        -e NODE_ENV="production"; then
         
-        warn "Failed to automatically configure Claude Code MCP server"
+        # Verify the MCP server was actually added
+        if claude mcp list | grep -q "specster-server"; then
+            success "Claude Code MCP server configured ✓"
+        else
+            error "MCP server configuration failed - not found in claude mcp list"
+            echo "  The command appeared to succeed but the server is not listed."
+            echo "  Please run this command manually and check for errors:"
+            echo "  claude mcp add specster-server node '$server_path' \\"
+            echo "    -e SPECSTER_DATA_DIR='.specster' \\"
+            echo "    -e SPECSTER_TEMPLATES_DIR='.specster/templates' \\"
+            echo "    -e SPECSTER_CONFIG_DIR='.specster/config'"
+            return 1
+        fi
+    else
+        error "Failed to configure Claude Code MCP server"
+        echo "  Error output above may indicate the issue."
         echo "  Please run this command manually:"
         echo "  claude mcp add specster-server node '$server_path' \\"
         echo "    -e SPECSTER_DATA_DIR='.specster' \\"
         echo "    -e SPECSTER_TEMPLATES_DIR='.specster/templates' \\"
         echo "    -e SPECSTER_CONFIG_DIR='.specster/config'"
-        return 0
-    }
-    
-    success "Claude Code MCP server configured ✓"
+        return 1
+    fi
 }
 
 # Set up permissions
@@ -582,6 +665,9 @@ show_summary() {
     
     echo ""
     echo -e "${GREEN}🎉 Specster installation completed successfully!${NC}"
+    echo ""
+    echo -e "${BLUE}📍 Installation Location:${NC}"
+    echo "  ${CYAN}${INSTALL_DIR}${NC}"
     echo ""
     echo -e "${BLUE}📚 Quick Start:${NC}"
     echo "  1. Start Claude Code CLI:"
@@ -686,6 +772,10 @@ main() {
         esac
     done
     
+    # Capture user's installation directory at the very beginning
+    INSTALL_DIR="${PWD}"
+    debug "Installation directory: ${INSTALL_DIR}"
+    
     # Set up error handling
     trap cleanup_on_failure_enhanced ERR
     
@@ -701,6 +791,7 @@ main() {
     if [ "$REMOTE_INSTALL" = true ]; then
         check_download_tools
         download_repository
+        copy_files_to_install_dir  # New step to copy files to user's directory
     fi
     check_prerequisites
     create_project_structure
