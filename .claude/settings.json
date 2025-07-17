@@ -1,0 +1,47 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "mcp__specster-server__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .specster/hooks/validate-spec-operation.js",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "mcp__specster-server__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .specster/hooks/update-spec-state.js",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .specster/hooks/track-progress.js",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
+  "env": {
+    "SPECSTER_DATA_DIR": ".specster",
+    "SPECSTER_TEMPLATES_DIR": ".specster/templates",
+    "SPECSTER_CONFIG_DIR": ".specster/config",
+    "SPECSTER_ENABLE_VALIDATION": "true",
+    "SPECSTER_DEBUG": "false"
+  }
+}

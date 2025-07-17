@@ -1,0 +1,14 @@
+{
+  "specster-server": {
+    "command": "node",
+    "args": ["mcp-server/dist/server.js"],
+    "env": {
+      "SPECSTER_DATA_DIR": ".specster",
+      "SPECSTER_TEMPLATES_DIR": ".specster/templates",
+      "SPECSTER_CONFIG_DIR": ".specster/config",
+      "SPECSTER_DEFAULT_AUTHOR": "Developer",
+      "SPECSTER_ENABLE_VALIDATION": "true",
+      "NODE_ENV": "production"
+    }
+  }
+}
