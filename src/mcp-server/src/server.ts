@@ -80,7 +80,7 @@ class SpecsterMCPServer {
     const stateManagerConfig: StateManagerConfig = {
       persistenceEnabled: true,
       storageType: 'file',
-      storagePath: this.config.dataDir,
+      storagePath: `${this.config.dataDir}/state`,
       autoSave: true,
       saveInterval: 30000
     };
@@ -472,9 +472,7 @@ class SpecsterMCPServer {
       // Start workflow
       await this.workflowEngine.startWorkflow(name, `${name}-workflow`, { specName: name });
       
-      // Create spec directory structure
-      const specDir = `specs/${name}`;
-      await this.fileManager.createFile(`${specDir}/spec.json`, JSON.stringify(specState, null, 2), WorkflowPhase.REQUIREMENTS);
+      // Spec directory structure will be created when files are added (StateManager handles state persistence)
       
       this.logger.info(`Specification '${name}' initialized successfully`);
       
@@ -488,7 +486,7 @@ class SpecsterMCPServer {
             data: {
               currentPhase: specState.workflow.currentPhase,
               createdAt: specState.metadata.createdAt,
-              specDir: specDir
+              specDir: `specs/${name}`
             }
           }, null, 2)
         }]
