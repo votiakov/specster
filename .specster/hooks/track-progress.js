@@ -5,8 +5,8 @@
  * Tracks progress and sends notifications
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 // Read input from stdin
 let input = '';

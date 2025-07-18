@@ -5,8 +5,9 @@
  * Updates state after successful MCP tool operations
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
 
 // Read input from stdin
 let input = '';
@@ -292,6 +293,5 @@ function generateId() {
 }
 
 function generateMD5(content) {
-    const crypto = require('crypto');
     return crypto.createHash('md5').update(content).digest('hex');
 }

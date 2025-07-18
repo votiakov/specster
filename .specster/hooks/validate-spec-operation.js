@@ -5,8 +5,8 @@
  * Validates MCP tool calls before execution
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 // Read input from stdin
 let input = '';
