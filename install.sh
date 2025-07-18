@@ -220,22 +220,46 @@ copy_files_to_install_dir() {
         return 1
     fi
     
-    # Copy essential directories
-    debug "Copying .specster directory..."
-    cp -r .specster "${INSTALL_DIR}/" || {
-        error "Failed to copy .specster directory"
+    # Create .specster directory structure
+    debug "Creating .specster directory structure..."
+    mkdir -p "${INSTALL_DIR}/.specster"/{config,templates,hooks,specs,state} || {
+        error "Failed to create .specster directory structure"
         return 1
+    }
+    
+    # Copy essential .specster subdirectories selectively
+    debug "Copying .specster/config..."
+    cp -r .specster/config/* "${INSTALL_DIR}/.specster/config/" || {
+        error "Failed to copy .specster/config"
+        return 1
+    }
+    
+    debug "Copying .specster/templates..."
+    cp -r .specster/templates/* "${INSTALL_DIR}/.specster/templates/" || {
+        error "Failed to copy .specster/templates"
+        return 1
+    }
+    
+    debug "Copying .specster/hooks..."
+    cp -r .specster/hooks/* "${INSTALL_DIR}/.specster/hooks/" || {
+        error "Failed to copy .specster/hooks"
+        return 1
+    }
+    
+    debug "Copying .specster/mcp-server..."
+    cp -r .specster/mcp-server "${INSTALL_DIR}/.specster/" || {
+        error "Failed to copy .specster/mcp-server"
+        return 1
+    }
+    
+    debug "Copying .specster/.gitignore..."
+    cp .specster/.gitignore "${INSTALL_DIR}/.specster/" || {
+        warn "Failed to copy .specster/.gitignore (non-critical)"
     }
     
     debug "Copying .claude directory..."
     cp -r .claude "${INSTALL_DIR}/" || {
         error "Failed to copy .claude directory"
-        return 1
-    }
-    
-    debug "Copying mcp-server directory..."
-    cp -r mcp-server "${INSTALL_DIR}/" || {
-        error "Failed to copy mcp-server directory"
         return 1
     }
     
@@ -494,12 +518,12 @@ build_mcp_server() {
         return 0
     fi
     
-    if [ ! -d "mcp-server" ]; then
-        error "mcp-server directory not found. Are you in the Specster project directory?"
+    if [ ! -d ".specster/mcp-server" ]; then
+        error ".specster/mcp-server directory not found. Are you in the Specster project directory?"
         exit 1
     fi
     
-    cd mcp-server
+    cd .specster/mcp-server
     
     # Install dependencies
     debug "Installing npm dependencies..."
@@ -517,11 +541,11 @@ build_mcp_server() {
         npm run build --silent
     fi
     
-    cd ..
+    cd ../..
     
     # Verify build succeeded
-    if [ ! -f "mcp-server/dist/server.js" ]; then
-        error "Build failed - server.js not found in mcp-server/dist/"
+    if [ ! -f ".specster/mcp-server/dist/server.js" ]; then
+        error "Build failed - server.js not found in .specster/mcp-server/dist/"
         exit 1
     fi
     
@@ -540,7 +564,7 @@ configure_claude_code() {
     if ! command -v claude &> /dev/null; then
         warn "Claude Code CLI not found - skipping MCP server configuration"
         echo "  To configure later, run:"
-        echo "  claude mcp add specster-server node $(pwd)/mcp-server/dist/server.js \\"
+        echo "  claude mcp add specster-server node $(pwd)/.specster/mcp-server/dist/server.js \\"
         echo "    -e SPECSTER_DATA_DIR='.specster' \\"
         echo "    -e SPECSTER_TEMPLATES_DIR='.specster/templates' \\"
         echo "    -e SPECSTER_CONFIG_DIR='.specster/config'"
@@ -553,7 +577,7 @@ configure_claude_code() {
     fi
     
     # Get absolute path to the server
-    local server_path="$(pwd)/mcp-server/dist/server.js"
+    local server_path="$(pwd)/.specster/mcp-server/dist/server.js"
     local author_name="${USER:-$(whoami 2>/dev/null || echo 'Developer')}"
     
     debug "Configuring MCP server at: $server_path"
@@ -629,20 +653,20 @@ run_tests() {
     log "Running installation tests..."
     
     if [ "$DRY_RUN" = true ]; then
-        echo "Would run: npm test in mcp-server directory"
+        echo "Would run: npm test in .specster/mcp-server directory"
         echo "Would run: node test-workflow.js"
         return 0
     fi
     
     # Run MCP server tests
-    cd mcp-server
+    cd .specster/mcp-server
     debug "Running MCP server unit tests..."
     if [ "$VERBOSE" = true ]; then
         npm test
     else
         npm test --silent
     fi
-    cd ..
+    cd ../..
     
     # Run workflow tests if available
     if [ -f "test-workflow.js" ]; then
@@ -685,7 +709,7 @@ show_summary() {
     echo -e "${BLUE}📁 Project Structure:${NC}"
     echo "  ${CYAN}.specster/${NC}              # Specster data directory"
     echo "  ${CYAN}.claude/commands/${NC}       # Custom slash commands"
-    echo "  ${CYAN}mcp-server/dist/${NC}        # Built MCP server"
+    echo "  ${CYAN}.specster/mcp-server/${NC}   # Built MCP server"
     echo ""
     echo -e "${BLUE}🔧 Configuration:${NC}"
     echo "  • MCP server: ${GREEN}configured and ready${NC}"
@@ -716,14 +740,14 @@ cleanup_on_failure() {
     fi
     
     # Remove partial MCP server build
-    if [ -d "mcp-server/node_modules" ]; then
-        rm -rf mcp-server/node_modules
-        debug "Removed mcp-server/node_modules"
+    if [ -d ".specster/mcp-server/node_modules" ]; then
+        rm -rf .specster/mcp-server/node_modules
+        debug "Removed .specster/mcp-server/node_modules"
     fi
     
-    if [ -d "mcp-server/dist" ]; then
-        rm -rf mcp-server/dist
-        debug "Removed mcp-server/dist"
+    if [ -d ".specster/mcp-server/dist" ]; then
+        rm -rf .specster/mcp-server/dist
+        debug "Removed .specster/mcp-server/dist"
     fi
     
     # Remove Claude Code MCP server configuration
