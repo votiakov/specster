@@ -59,10 +59,10 @@ detect_installation_context() {
     debug "Detecting installation context..."
     
     # Check if we're in a local Specster repository
-    if [ -d "mcp-server" ] && [ -d ".specster" ] && [ -f "package.json" ]; then
+    if [ -d "install-assets" ] && [ -d "src/mcp-server" ] && [ -f "package.json" ]; then
         debug "Local repository detected"
         REMOTE_INSTALL=false
-    elif [ -d "mcp-server" ] || [ -d ".specster" ]; then
+    elif [ -d "install-assets" ] || [ -d "src/mcp-server" ]; then
         debug "Partial repository detected - may be incomplete"
         REMOTE_INSTALL=false
     else
@@ -190,7 +190,7 @@ download_repository() {
     cd "$extracted_dir"
     
     # Verify repository structure
-    if [ ! -d "mcp-server" ] || [ ! -d ".specster" ]; then
+    if [ ! -d "install-assets" ] || [ ! -d "src/mcp-server" ]; then
         error "Downloaded repository has invalid structure"
         cleanup_temp_files
         exit 1
@@ -215,7 +215,7 @@ copy_files_to_install_dir() {
     fi
     
     # Ensure we're in the extracted directory
-    if [ ! -d ".specster" ] || [ ! -d "mcp-server" ]; then
+    if [ ! -d "install-assets" ] || [ ! -d "src/mcp-server" ]; then
         error "Not in the correct directory for file copying"
         return 1
     fi
@@ -284,9 +284,15 @@ mcp-server/node_modules/
 mcp-server/package-lock.json
 EOF
     
-    debug "Copying .claude directory..."
-    cp -r .claude "${INSTALL_DIR}/" || {
-        error "Failed to copy .claude directory"
+    debug "Creating .claude directory..."
+    mkdir -p "${INSTALL_DIR}/.claude" || {
+        error "Failed to create .claude directory"
+        return 1
+    }
+    
+    debug "Copying .claude configuration..."
+    cp -r install-assets/claude-config/* "${INSTALL_DIR}/.claude/" || {
+        error "Failed to copy .claude configuration"
         return 1
     }
     
