@@ -83,6 +83,10 @@ temp/
 test-output/
 *.test-output
 
+# Prevent installation pollution in source repo
+.specster/
+.specster-*/
+
 # OS-specific
 .DS_Store
 .DS_Store?
