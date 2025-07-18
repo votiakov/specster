@@ -1312,7 +1312,7 @@ class SpecsterMCPServer {
       
       this.logger.info(`Applying template: ${templateName}`);
       
-      // Validate required variables based on template
+      // Auto-populate required variables if missing
       const requiredVars: Record<string, string[]> = {
         'requirements-template.md': ['specName', 'description', 'author', 'date'],
         'design-template.md': ['specName', 'description', 'author', 'date'],
@@ -1320,10 +1320,29 @@ class SpecsterMCPServer {
       };
       
       const required = requiredVars[templateName] || [];
-      const missing = required.filter(key => !variables[key]);
       
-      if (missing.length > 0) {
-        throw new Error(`Missing required variables: ${missing.join(', ')}`);
+      // Auto-populate missing variables with defaults
+      for (const key of required) {
+        if (!variables[key]) {
+          switch (key) {
+            case 'author':
+              variables[key] = this.config.defaultAuthor;
+              break;
+            case 'date':
+              variables[key] = new Date().toISOString().split('T')[0];
+              break;
+            case 'specName':
+              // Try to extract from variables or use a default
+              variables[key] = variables.specName || variables.project_name || 'unknown-spec';
+              break;
+            case 'description':
+              // Try to extract from variables or use a default
+              variables[key] = variables.description || variables.overview || 'No description provided';
+              break;
+            default:
+              variables[key] = 'Not specified';
+          }
+        }
       }
       
       // Apply template
