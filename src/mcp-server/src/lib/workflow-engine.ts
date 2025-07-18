@@ -33,6 +33,7 @@ export interface WorkflowConfig {
   defaultApprover?: string;
   requireExplicitApproval?: boolean;
   approvalTimeout?: number;
+  baseDirectory?: string;
 }
 
 export interface PhaseDefinition {
@@ -135,7 +136,8 @@ export class WorkflowEngine {
   constructor(config: WorkflowConfig, logger: Logger) {
     this.config = {
       enableApprovalWorkflow: true,
-      rulesPath: '.specster/config/workflow-rules.json',
+      rulesPath: 'config/workflow-rules.json',
+      baseDirectory: '.specster',
       ...config
     };
     this.logger = logger;
@@ -417,7 +419,7 @@ export class WorkflowEngine {
    */
   private async isRequirementsComplete(specName: string): Promise<boolean> {
     // Check if requirements.md exists and has content
-    const requirementsPath = path.join('.specster', 'specs', specName, 'requirements.md');
+    const requirementsPath = path.join(this.config.baseDirectory || '.specster', 'specs', specName, 'requirements.md');
     try {
       const content = await fs.readFile(requirementsPath, 'utf8');
       return content.trim().length > 0;
@@ -433,7 +435,7 @@ export class WorkflowEngine {
    */
   private async isDesignComplete(specName: string): Promise<boolean> {
     // Check if design.md exists and has content
-    const designPath = path.join('.specster', 'specs', specName, 'design.md');
+    const designPath = path.join(this.config.baseDirectory || '.specster', 'specs', specName, 'design.md');
     try {
       const content = await fs.readFile(designPath, 'utf8');
       return content.trim().length > 0;
@@ -449,7 +451,7 @@ export class WorkflowEngine {
    */
   private async isTasksComplete(specName: string): Promise<boolean> {
     // Check if tasks.md exists and has content
-    const tasksPath = path.join('.specster', 'specs', specName, 'tasks.md');
+    const tasksPath = path.join(this.config.baseDirectory || '.specster', 'specs', specName, 'tasks.md');
     try {
       const content = await fs.readFile(tasksPath, 'utf8');
       return content.trim().length > 0;

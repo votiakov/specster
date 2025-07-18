@@ -91,7 +91,8 @@ class SpecsterMCPServer {
       timeout: 300000, // 5 minutes
       enableApprovalWorkflow: true,
       requireExplicitApproval: true,
-      approvalTimeout: 3600000 // 1 hour
+      approvalTimeout: 3600000, // 1 hour
+      baseDirectory: this.config.dataDir
     };
     this.workflowEngine = new WorkflowEngine(workflowConfig, this.logger);
 
@@ -472,7 +473,7 @@ class SpecsterMCPServer {
       await this.workflowEngine.startWorkflow(name, `${name}-workflow`, { specName: name });
       
       // Create spec directory structure
-      const specDir = `.specster/specs/${name}`;
+      const specDir = `specs/${name}`;
       await this.fileManager.createFile(`${specDir}/spec.json`, JSON.stringify(specState, null, 2), WorkflowPhase.REQUIREMENTS);
       
       this.logger.info(`Specification '${name}' initialized successfully`);
@@ -545,7 +546,7 @@ class SpecsterMCPServer {
       });
       
       // Save requirements file
-      const requirementsPath = `.specster/specs/${specName}/requirements.md`;
+      const requirementsPath = `specs/${specName}/requirements.md`;
       await this.fileManager.createFile(requirementsPath, templateResult.content, WorkflowPhase.REQUIREMENTS);
       
       this.logger.info(`Requirements phase entered successfully for: ${specName}`);
@@ -601,7 +602,7 @@ class SpecsterMCPServer {
       }
       
       // Check if explicit approval is required
-      const requirementsContent = await this.fileManager.readFile(`.specster/specs/${specName}/requirements.md`);
+      const requirementsContent = await this.fileManager.readFile(`specs/${specName}/requirements.md`);
       const approvalValidation = await this.workflowEngine.validatePhaseTransitionApproval(
         specName,
         Phase.REQUIREMENTS,
@@ -634,7 +635,7 @@ class SpecsterMCPServer {
       }
       
       // Requirements content already read above for approval validation
-      const requirementsPath = `.specster/specs/${specName}/requirements.md`;
+      const requirementsPath = `specs/${specName}/requirements.md`;
       
       // Transition to design phase
       const transitioned = await this.stateManager.transitionSpecificationPhase(specName, Phase.DESIGN, this.config.defaultAuthor);
@@ -657,7 +658,7 @@ class SpecsterMCPServer {
       });
       
       // Save design file
-      const designPath = `.specster/specs/${specName}/design.md`;
+      const designPath = `specs/${specName}/design.md`;
       await this.fileManager.createFile(designPath, templateResult.content, WorkflowPhase.DESIGN);
       
       // Update workflow engine
@@ -716,7 +717,7 @@ class SpecsterMCPServer {
       }
       
       // Check if explicit approval is required
-      const designContent = await this.fileManager.readFile(`.specster/specs/${specName}/design.md`);
+      const designContent = await this.fileManager.readFile(`specs/${specName}/design.md`);
       const approvalValidation = await this.workflowEngine.validatePhaseTransitionApproval(
         specName,
         Phase.DESIGN,
@@ -749,7 +750,7 @@ class SpecsterMCPServer {
       }
       
       // Design content already read above for approval validation
-      const designPath = `.specster/specs/${specName}/design.md`;
+      const designPath = `specs/${specName}/design.md`;
       
       // Transition to tasks phase
       const transitioned = await this.stateManager.transitionSpecificationPhase(specName, Phase.TASKS, this.config.defaultAuthor);
@@ -772,7 +773,7 @@ class SpecsterMCPServer {
       });
       
       // Save tasks file
-      const tasksPath = `.specster/specs/${specName}/tasks.md`;
+      const tasksPath = `specs/${specName}/tasks.md`;
       await this.fileManager.createFile(tasksPath, templateResult.content, WorkflowPhase.IMPLEMENTATION);
       
       // Update workflow engine
@@ -1125,7 +1126,7 @@ class SpecsterMCPServer {
       }
       
       // Save file
-      const filePath = `.specster/specs/${specName}/${fileName}`;
+      const filePath = `specs/${specName}/${fileName}`;
       const fileMetadata = await this.fileManager.updateFile(filePath, content);
       
       // Update specification state with file info
@@ -1238,7 +1239,7 @@ class SpecsterMCPServer {
       }
       
       // Load file content
-      const filePath = `.specster/specs/${specName}/${fileName}`;
+      const filePath = `specs/${specName}/${fileName}`;
       const content = await this.fileManager.readFile(filePath);
       
       // Update file info in state
