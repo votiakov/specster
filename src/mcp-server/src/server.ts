@@ -534,22 +534,25 @@ class SpecsterMCPServer {
       // Update workflow engine
       await this.workflowEngine.transitionToPhase(`${specName}-workflow`, WorkflowPhase.REQUIREMENTS, 'User requested requirements phase');
       
-      // Apply requirements template
-      const templateResult = await this.templateManager.processTemplate('requirements-template.md', {
-        variables: {
-          specName,
-          description: specState.metadata.description,
-          author: specState.metadata.author,
-          date: new Date().toISOString().split('T')[0]
-        },
-        phase: WorkflowPhase.REQUIREMENTS,
-        projectId: specName,
-        timestamp: new Date()
-      });
-      
-      // Save requirements file
-      const requirementsPath = `specs/${specName}/requirements.md`;
-      await this.fileManager.createFile(requirementsPath, templateResult.content, WorkflowPhase.REQUIREMENTS);
+      // Create requirements.md from template
+      try {
+        const templateDir = this.config.templatesDir;
+        const requirementsTemplatePath = path.join(templateDir, 'requirements-template.md');
+        const requirementsTemplate = await fs.readFile(requirementsTemplatePath, 'utf8');
+        
+        // Simple template variable replacement
+        const requirementsContent = requirementsTemplate
+          .replace(/\{\{specName\}\}/g, specName)
+          .replace(/\{\{description\}\}/g, specState.metadata.description);
+        
+        // Write requirements file
+        const specDirPath = path.join(this.config.dataDir, 'specs', specName);
+        await fs.writeFile(path.join(specDirPath, 'requirements.md'), requirementsContent, 'utf8');
+        
+        this.logger.info(`Requirements file created at specs/${specName}/requirements.md`);
+      } catch (templateError) {
+        throw new Error(`Failed to create requirements file: ${templateError instanceof Error ? templateError.message : String(templateError)}`);
+      }
       
       this.logger.info(`Requirements phase entered successfully for: ${specName}`);
       
@@ -562,8 +565,8 @@ class SpecsterMCPServer {
             phase: Phase.REQUIREMENTS,
             message: `Successfully entered requirements phase for '${specName}'`,
             data: {
-              requirementsFile: requirementsPath,
-              template: templateResult.content.substring(0, 200) + '...'
+              requirementsFile: `specs/${specName}/requirements.md`,
+              currentPhase: Phase.REQUIREMENTS
             }
           }, null, 2)
         }]
