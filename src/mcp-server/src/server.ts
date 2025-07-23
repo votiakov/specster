@@ -15,6 +15,8 @@ import {
   McpError,
 } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 
 import { SpecsterConfig, Phase, SpecificationState } from './types/index.js';
 import { WorkflowEngine, WorkflowConfig, WorkflowPhase } from './lib/workflow-engine.js';
@@ -472,7 +474,9 @@ class SpecsterMCPServer {
       // Start workflow
       await this.workflowEngine.startWorkflow(name, `${name}-workflow`, { specName: name });
       
-      // Spec directory structure will be created when files are added (StateManager handles state persistence)
+      // Create spec directory structure (required by validation hook)
+      const specDirPath = path.join(this.config.dataDir, 'specs', name);
+      await fs.mkdir(specDirPath, { recursive: true });
       
       this.logger.info(`Specification '${name}' initialized successfully`);
       
