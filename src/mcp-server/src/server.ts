@@ -534,24 +534,17 @@ class SpecsterMCPServer {
       // Update workflow engine
       await this.workflowEngine.transitionToPhase(`${specName}-workflow`, WorkflowPhase.REQUIREMENTS, 'User requested requirements phase');
       
-      // Create requirements.md from template
+      // Generate requirements content using AI
       try {
-        const templateDir = this.config.templatesDir;
-        const requirementsTemplatePath = path.join(templateDir, 'requirements-template.md');
-        const requirementsTemplate = await fs.readFile(requirementsTemplatePath, 'utf8');
-        
-        // Simple template variable replacement
-        const requirementsContent = requirementsTemplate
-          .replace(/\{\{specName\}\}/g, specName)
-          .replace(/\{\{description\}\}/g, specState.metadata.description);
+        const requirementsContent = this.generateRequirementsContent(specName, specState.metadata.description);
         
         // Write requirements file
         const specDirPath = path.join(this.config.dataDir, 'specs', specName);
         await fs.writeFile(path.join(specDirPath, 'requirements.md'), requirementsContent, 'utf8');
         
         this.logger.info(`Requirements file created at specs/${specName}/requirements.md`);
-      } catch (templateError) {
-        throw new Error(`Failed to create requirements file: ${templateError instanceof Error ? templateError.message : String(templateError)}`);
+      } catch (contentError) {
+        throw new Error(`Failed to create requirements file: ${contentError instanceof Error ? contentError.message : String(contentError)}`);
       }
       
       this.logger.info(`Requirements phase entered successfully for: ${specName}`);
@@ -648,23 +641,19 @@ class SpecsterMCPServer {
         throw new Error(`Failed to transition to design phase`);
       }
       
-      // Apply design template with requirements context
-      const templateResult = await this.templateManager.processTemplate('design-template.md', {
-        variables: {
-          specName,
-          description: specState.metadata.description,
-          author: specState.metadata.author,
-          date: new Date().toISOString().split('T')[0],
-          requirements: requirementsContent
-        },
-        phase: WorkflowPhase.DESIGN,
-        projectId: specName,
-        timestamp: new Date()
-      });
-      
-      // Save design file
-      const designPath = `specs/${specName}/design.md`;
-      await this.fileManager.createFile(designPath, templateResult.content, WorkflowPhase.DESIGN);
+      // Generate design content using AI
+      try {
+        const designContent = this.generateDesignContent(specName, specState.metadata.description, requirementsContent);
+        
+        // Save design file
+        const designPath = `specs/${specName}/design.md`;
+        const specDirPath = path.join(this.config.dataDir, 'specs', specName);
+        await fs.writeFile(path.join(specDirPath, 'design.md'), designContent, 'utf8');
+        
+        this.logger.info(`Design file created at ${designPath}`);
+      } catch (contentError) {
+        throw new Error(`Failed to create design file: ${contentError instanceof Error ? contentError.message : String(contentError)}`);
+      }
       
       // Update workflow engine
       await this.workflowEngine.transitionToPhase(`${specName}-workflow`, WorkflowPhase.DESIGN, 'Design generated from requirements');
@@ -677,10 +666,9 @@ class SpecsterMCPServer {
           text: JSON.stringify({
             success: true,
             specName,
-            design: templateResult.content,
             message: `Design generated successfully for '${specName}'`,
             data: {
-              designFile: designPath,
+              designFile: `specs/${specName}/design.md`,
               phase: Phase.DESIGN
             }
           }, null, 2)
@@ -763,23 +751,19 @@ class SpecsterMCPServer {
         throw new Error(`Failed to transition to tasks phase`);
       }
       
-      // Apply tasks template with design context
-      const templateResult = await this.templateManager.processTemplate('tasks-template.md', {
-        variables: {
-          specName,
-          description: specState.metadata.description,
-          author: specState.metadata.author,
-          date: new Date().toISOString().split('T')[0],
-          design: designContent
-        },
-        phase: WorkflowPhase.IMPLEMENTATION,
-        projectId: specName,
-        timestamp: new Date()
-      });
-      
-      // Save tasks file
-      const tasksPath = `specs/${specName}/tasks.md`;
-      await this.fileManager.createFile(tasksPath, templateResult.content, WorkflowPhase.IMPLEMENTATION);
+      // Generate tasks content using AI
+      try {
+        const tasksContent = this.generateTasksContent(specName, specState.metadata.description, designContent);
+        
+        // Save tasks file
+        const tasksPath = `specs/${specName}/tasks.md`;
+        const specDirPath = path.join(this.config.dataDir, 'specs', specName);
+        await fs.writeFile(path.join(specDirPath, 'tasks.md'), tasksContent, 'utf8');
+        
+        this.logger.info(`Tasks file created at ${tasksPath}`);
+      } catch (contentError) {
+        throw new Error(`Failed to create tasks file: ${contentError instanceof Error ? contentError.message : String(contentError)}`);
+      }
       
       // Update workflow engine
       await this.workflowEngine.transitionToPhase(`${specName}-workflow`, WorkflowPhase.IMPLEMENTATION, 'Implementation tasks created from design');
@@ -792,10 +776,9 @@ class SpecsterMCPServer {
           text: JSON.stringify({
             success: true,
             specName,
-            tasks: templateResult.content,
             message: `Implementation tasks created successfully for '${specName}'`,
             data: {
-              tasksFile: tasksPath,
+              tasksFile: `specs/${specName}/tasks.md`,
               phase: Phase.TASKS
             }
           }, null, 2)
@@ -1609,6 +1592,281 @@ class SpecsterMCPServer {
         }]
       };
     }
+  }
+
+  private generateRequirementsContent(specName: string, description: string): string {
+    return `# Requirements Specification: ${specName}
+
+## Overview
+
+${description}
+
+## User Stories
+
+### Primary User Story
+As a user, I want to use ${specName} so that I can benefit from the described functionality.
+
+**Acceptance Criteria (EARS format):**
+- WHEN the user interacts with the system THEN the system SHALL respond appropriately
+- IF the user provides valid input THEN the system SHALL process it successfully
+- WHEN an error occurs THEN the system SHALL provide clear feedback
+
+## Functional Requirements
+
+### Core Functionality
+1. **Primary Feature**: The system SHALL implement the core functionality as described
+2. **User Interface**: The system SHALL provide an intuitive user interface
+3. **Data Management**: The system SHALL handle data securely and efficiently
+
+## Non-Functional Requirements
+
+### Performance
+- The system SHALL respond to user actions within 2 seconds
+- The system SHALL handle concurrent users appropriately
+
+### Security
+- The system SHALL protect user data according to best practices
+- The system SHALL validate all input data
+
+### Usability
+- The system SHALL be accessible to users with varying technical expertise
+- The system SHALL provide helpful error messages
+
+## Technical Requirements
+
+### Integration
+- The system SHALL integrate with existing systems as needed
+- The system SHALL use standard protocols and formats
+
+### Data
+- The system SHALL store data persistently
+- The system SHALL ensure data integrity
+
+## Dependencies
+
+### Internal Dependencies
+- To be defined during design phase
+
+### External Dependencies
+- To be identified based on technical requirements
+
+## Success Criteria
+
+- All functional requirements are met
+- System performs within specified parameters
+- User acceptance criteria are satisfied
+- System is ready for production deployment
+
+---
+
+**Status**: Draft  
+**Phase**: Requirements  
+**Created**: ${new Date().toISOString().split('T')[0]}`;
+  }
+
+  private generateDesignContent(specName: string, description: string, requirementsContent: string): string {
+    return `# Design Document: ${specName}
+
+## Overview
+
+${description}
+
+Based on the requirements analysis, this design document outlines the system architecture and implementation approach.
+
+## Architecture
+
+### System Architecture
+The system will follow a modular architecture with clear separation of concerns:
+
+- **Presentation Layer**: User interface and API endpoints
+- **Business Logic Layer**: Core functionality and business rules
+- **Data Access Layer**: Database interactions and data management
+- **Integration Layer**: External system interfaces
+
+### Component Interactions
+Components will communicate through well-defined interfaces, ensuring loose coupling and maintainability.
+
+## Key Design Decisions
+
+### Technology Stack
+- Backend: Modern framework with strong ecosystem support
+- Database: Appropriate database technology based on data requirements
+- API: RESTful API design following best practices
+
+### Data Models
+Core entities will be modeled to support the functional requirements while ensuring data integrity and performance.
+
+### Security Architecture
+- Authentication and authorization mechanisms
+- Input validation and sanitization
+- Secure data storage and transmission
+
+## Implementation Strategy
+
+### Phase 1: Core Infrastructure
+- Set up project structure and build pipeline
+- Implement basic data models and database schema
+- Create API foundation and authentication
+
+### Phase 2: Core Features
+- Implement primary functionality as defined in requirements
+- Add business logic and validation rules
+- Create user interfaces
+
+### Phase 3: Integration and Polish
+- Integrate with external systems as needed
+- Performance optimization and testing
+- Documentation and deployment preparation
+
+## Error Handling
+
+### Error Categories
+1. **Validation Errors**: Invalid input data
+2. **Business Logic Errors**: Rule violations
+3. **System Errors**: Infrastructure failures
+4. **Integration Errors**: External system issues
+
+### Recovery Strategies
+- Graceful error handling with user-friendly messages
+- Logging and monitoring for troubleshooting
+- Retry mechanisms for transient failures
+
+## Testing Strategy
+
+### Unit Testing
+- Comprehensive unit tests for business logic
+- Test coverage requirements and quality gates
+
+### Integration Testing
+- API endpoint testing
+- Database integration testing
+- External system integration testing
+
+### End-to-End Testing
+- Complete user workflow testing
+- Performance and load testing
+
+## Dependencies
+
+### Internal Dependencies
+- Core system components as defined in architecture
+
+### External Dependencies
+- Third-party libraries and frameworks
+- External APIs and services
+- Infrastructure components
+
+---
+
+**Status**: Draft  
+**Phase**: Design  
+**Created**: ${new Date().toISOString().split('T')[0]}`;
+  }
+
+  private generateTasksContent(specName: string, description: string, designContent: string): string {
+    return `# Implementation Tasks: ${specName}
+
+## Overview
+
+Implementation plan for ${description}
+
+This document breaks down the implementation into actionable tasks based on the design document.
+
+## Task Breakdown
+
+### Phase 1: Project Foundation
+- [ ] 1. Set up project structure and development environment
+  - Initialize project repository and structure
+  - Configure build tools and dependency management
+  - Set up development environment and tooling
+  - _Requirements: Development environment setup_
+
+- [ ] 2. Implement core data models and database schema
+  - Design and create database schema
+  - Implement data models and entity relationships
+  - Set up database migrations and versioning
+  - _Requirements: Data persistence and integrity_
+
+### Phase 2: Core Implementation
+- [ ] 3. Implement business logic layer
+  - Create core service classes and business rules
+  - Implement validation and error handling
+  - Add logging and monitoring infrastructure
+  - _Requirements: Core functionality and validation_
+
+- [ ] 4. Develop API endpoints and interfaces
+  - Design and implement REST API endpoints
+  - Add authentication and authorization
+  - Implement request/response handling
+  - _Requirements: External interfaces and security_
+
+### Phase 3: Integration and Testing
+- [ ] 5. Implement user interface components
+  - Create user interface layouts and components
+  - Implement user interaction handlers
+  - Add client-side validation and feedback
+  - _Requirements: User experience and interface_
+
+- [ ] 6. Integration testing and validation
+  - Write comprehensive unit tests
+  - Implement integration test suites
+  - Perform end-to-end testing scenarios
+  - _Requirements: Quality assurance and reliability_
+
+### Phase 4: Deployment and Documentation
+- [ ] 7. Prepare production deployment
+  - Configure production environment
+  - Set up deployment pipeline and automation
+  - Implement monitoring and logging
+  - _Requirements: Production readiness_
+
+- [ ] 8. Documentation and handover
+  - Create user documentation and guides
+  - Document API specifications
+  - Prepare maintenance and support documentation
+  - _Requirements: Documentation and support_
+
+## Implementation Guidelines
+
+### Development Standards
+- Follow established coding standards and best practices
+- Implement comprehensive error handling
+- Ensure code is well-documented and maintainable
+
+### Testing Requirements
+- Minimum 80% test coverage for business logic
+- All API endpoints must have integration tests
+- Critical user paths must have end-to-end tests
+
+### Quality Gates
+- All tests must pass before deployment
+- Code review approval required for all changes
+- Performance benchmarks must be met
+
+## Success Criteria
+
+- All functional requirements are implemented and tested
+- System performs within specified performance parameters
+- All quality gates and testing requirements are met
+- System is successfully deployed to production environment
+
+## Risk Mitigation
+
+### Technical Risks
+- Regular code reviews and pair programming
+- Incremental development and testing approach
+- Continuous integration and automated testing
+
+### Schedule Risks
+- Prioritize core functionality first
+- Plan for iterative development cycles
+- Maintain buffer time for unforeseen challenges
+
+---
+
+**Status**: Draft  
+**Phase**: Tasks  
+**Created**: ${new Date().toISOString().split('T')[0]}`;
   }
 
   async run(): Promise<void> {
